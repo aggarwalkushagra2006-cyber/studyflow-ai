@@ -3,8 +3,11 @@ import axios from 'axios';
 import Header from './components/Header';
 import UploadSection from './components/UploadSection';
 import ResultsSection from './components/ResultsSection';
+import Timer from './components/Timer';
+import Dashboard from './components/Dashboard';
 
 export default function App() {
+  const [currentPage, setCurrentPage] = useState('home');
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -28,13 +31,20 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
-      <Header />
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          <UploadSection onAnalyze={handleAnalyze} loading={loading} error={error} />
-          <ResultsSection result={result} loading={loading} />
-        </div>
-      </main>
+      <Header currentPage={currentPage} onPageChange={setCurrentPage} />
+
+      {currentPage === 'home' && (
+        <main className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <UploadSection onAnalyze={handleAnalyze} loading={loading} error={error} />
+            <ResultsSection result={result} loading={loading} />
+          </div>
+        </main>
+      )}
+
+      {currentPage === 'dashboard' && <Dashboard />}
+
+      <Timer />
     </div>
   );
 }
