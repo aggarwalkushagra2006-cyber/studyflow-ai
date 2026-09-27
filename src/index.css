@@ -89,14 +89,14 @@ function buildFallbackStudyPack(text, language) {
     easy: [
       {
         id: uid('quiz'),
-        question: `Which topic is most central in this study material?`,
+        question: 'Which topic is most central in this study material?',
         options: [mainTopics[0] || 'Main idea', mainTopics[1] || 'Supporting concept', 'Not relevant', 'None'],
         answer: mainTopics[0] || 'Main idea',
         explanation: 'The main topic is the central idea around which the material is organized.',
       },
       {
         id: uid('quiz'),
-        question: `Why is revision important for this material?`,
+        question: 'Why is revision important for this material?',
         options: ['It reduces retention', 'It helps strengthen understanding and recall', 'It makes the material longer', 'It removes the need to practice'],
         answer: 'It helps strengthen understanding and recall',
         explanation: 'Revision reinforces concepts and improves recall under exam conditions.',
@@ -105,7 +105,7 @@ function buildFallbackStudyPack(text, language) {
     medium: [
       {
         id: uid('quiz'),
-        question: `What is the best way to connect theory with examples?`,
+        question: 'What is the best way to connect theory with examples?',
         options: ['Ignore the examples', 'Map theory to practical scenarios', 'Memorize only the first line', 'Skip definitions'],
         answer: 'Map theory to practical scenarios',
         explanation: 'Connecting theory to examples makes ideas simpler to understand and remember.',
@@ -114,7 +114,7 @@ function buildFallbackStudyPack(text, language) {
     hard: [
       {
         id: uid('quiz'),
-        question: `Which approach is most effective for mastering this topic?`,
+        question: 'Which approach is most effective for mastering this topic?',
         options: ['Only reading once', 'Active recall, revision, and practice', 'Skipping difficult subjects', 'Reading without understanding'],
         answer: 'Active recall, revision, and practice',
         explanation: 'A strong study method includes recall, explanation, and repeated practice.',
@@ -132,7 +132,7 @@ function buildFallbackStudyPack(text, language) {
     keyPoints,
     revisionNotes: `Revise ${mainTopics.slice(0, 3).join(', ')} and test yourself using flashcards and short quizzes.`,
     importantQuestions: questions,
-    quickSummary: `Quick summary: focus on the core concepts, revise definitions, and practice examples before the next session.`,
+    quickSummary: 'Quick summary: focus on the core concepts, revise definitions, and practice examples before the next session.',
     flashcards,
     quiz,
     studyApproach: {
@@ -148,11 +148,10 @@ function buildFallbackStudyPack(text, language) {
 function buildFallbackChatAnswer(question, material) {
   const clean = safeText(material || '').replace(/\s+/g, ' ').trim();
   const key = clean.split(/[.!?]/).filter(Boolean)[0] || 'The study material focuses on the key ideas and concepts.';
-  const answer = `Based on the uploaded material, the easiest explanation is: ${key}. In simple terms, focus on the main idea first, understand the core definition, and connect it with an example. You can study by breaking it into smaller concepts, revising with flashcards, and testing yourself through a short quiz.`;
   return {
     question,
-    answer,
-    beginner: `Think of it like this: start with the main idea, then add one example and one definition. Once the idea is clear, move to practice questions.`,
+    answer: `Based on the uploaded material, the easiest explanation is: ${key}. In simple terms, focus on the main idea first, understand the core definition, and connect it with an example. You can study by breaking it into smaller concepts, revising with flashcards, and testing yourself through a short quiz.`,
+    beginner: 'Think of it like this: start with the main idea, then add one example and one definition. Once the idea is clear, move to practice questions.',
   };
 }
 
@@ -232,21 +231,24 @@ function makeSubjectTemplate(name, chaptersCount) {
 }
 
 function App() {
-  const [theme, setTheme] = useState(() => localStorage.getItem('studyflow-theme') || 'dark');
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('studyflow-theme');
+    return saved || 'dark';
+  });
   const [language, setLanguage] = useState(() => localStorage.getItem('studyflow-language') || 'English');
   const [activeSection, setActiveSection] = useState('Dashboard');
   const [sourceType, setSourceType] = useState('text');
   const [studyText, setStudyText] = useState('');
   const [urlInput, setUrlInput] = useState('');
   const [uploadedFileName, setUploadedFileName] = useState('');
-  const [notesResult, setNotesResult] = useState(() => JSON.parse(localStorage.getItem('studyflow-notes') || 'null') || null);
-  const [subjects, setSubjects] = useState(() => JSON.parse(localStorage.getItem('studyflow-subjects') || '[]'));
-  const [studyPlan, setStudyPlan] = useState(() => JSON.parse(localStorage.getItem('studyflow-plan') || '[]'));
-  const [quizPack, setQuizPack] = useState(() => JSON.parse(localStorage.getItem('studyflow-quiz') || 'null') || null);
-  const [flashcards, setFlashcards] = useState(() => JSON.parse(localStorage.getItem('studyflow-flashcards') || '[]'));
-  const [chatMessages, setChatMessages] = useState(() => JSON.parse(localStorage.getItem('studyflow-chat') || '[]'));
+  const [notesResult, setNotesResult] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-notes') || 'null', null));
+  const [subjects, setSubjects] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-subjects') || '[]', []));
+  const [studyPlan, setStudyPlan] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-plan') || '[]', []));
+  const [quizPack, setQuizPack] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-quiz') || 'null', null));
+  const [flashcards, setFlashcards] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-flashcards') || '[]', []));
+  const [chatMessages, setChatMessages] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-chat') || '[]', []));
   const [chatInput, setChatInput] = useState('');
-  const [studyStats, setStudyStats] = useState(() => JSON.parse(localStorage.getItem('studyflow-stats') || '{"daily":{},"weekly":{},"streak":0,"totalSessions":0}') );
+  const [studyStats, setStudyStats] = useState(() => parseJSONMaybe(localStorage.getItem('studyflow-stats') || '{"daily":{},"weekly":{},"streak":0,"totalSessions":0}', { daily: {}, weekly: {}, streak: 0, totalSessions: 0 }));
   const [notice, setNotice] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(25);
@@ -376,6 +378,12 @@ function App() {
     return values.reduce((sum, val) => sum + val, 0);
   }, [studyStats.daily]);
 
+  const focusScore = Math.min(100, Math.round(overallProgress * 0.75 + Math.min(25, dailyMinutes / 8)));
+
+  const upcomingTasks = useMemo(() => {
+    return studyPlan.flatMap((day) => day.tasks).slice(0, 4);
+  }, [studyPlan]);
+
   useEffect(() => {
     if (!subjects.length) {
       setSelectedTimerSubject('General');
@@ -474,8 +482,8 @@ function App() {
         if (chapter.id !== chapterId) return chapter;
         return { ...chapter, status };
       });
-      const completedChapters = nextChapters.filter((chapter) => chapter.status === 'Completed').length;
-      return { ...subject, chapters: nextChapters, completedChapters, lastStudied: new Date().toISOString() };
+      const completedChaptersValue = nextChapters.filter((chapter) => chapter.status === 'Completed').length;
+      return { ...subject, chapters: nextChapters, completedChapters: completedChaptersValue, lastStudied: new Date().toISOString() };
     }));
   }
 
@@ -494,7 +502,6 @@ function App() {
     const nextSubjects = [...subjects, makeSubjectTemplate(subjectName, chapterCount || 1)];
     setSubjects(nextSubjects);
     setStudyPlan(buildPlanner(nextSubjects, examDate, dailyHours, sessionMinutes));
-    localStorage.setItem('studyflow-plan', JSON.stringify(buildPlanner(nextSubjects, examDate, dailyHours, sessionMinutes)));
     setNotice('Study planner generated successfully.');
   }
 
@@ -575,9 +582,39 @@ function App() {
 
   function renderSection() {
     switch (activeSection) {
-      case 'Dashboard':
+      case 'Dashboard': {
+        const subjectProgress = subjects.length
+          ? subjects.map((subject) => ({
+              name: subject.name,
+              value: ((subject.completedChapters || 0) / Math.max(subject.totalChapters || 1, 1)) * 100,
+            }))
+          : [];
+
+        const chartBars = [6, 5, 4, 3, 2, 1, 0].map((offset) => {
+          const date = new Date();
+          date.setDate(date.getDate() - offset);
+          const key = date.toISOString().split('T')[0];
+          return {
+            label: date.toLocaleDateString('en-US', { weekday: 'short' }),
+            value: studyStats.daily?.[key] || 0,
+          };
+        });
+
         return (
           <div className="space-y-6">
+            <div className="dashboard-hero panel">
+              <div>
+                <div className="eyebrow">Performance overview</div>
+                <h2 className="dashboard-title">Keep your momentum strong.</h2>
+                <p className="dashboard-subtitle">Balance deep learning, quick revision, and active recall with a structured plan built for consistent progress.</p>
+              </div>
+              <div className="hero-metrics">
+                <MetricPill label="Focus score" value={`${focusScore}%`} accent="violet" />
+                <MetricPill label="Study streak" value={`${studyStats.streak || 0} days`} accent="green" />
+                <MetricPill label="This week" value={`${weeklyMinutes} min`} accent="blue" />
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
               <StatCard label="Total Subjects" value={totalSubjects} color="violet" />
               <StatCard label="Completed Subjects" value={completedSubjects} color="green" />
@@ -585,93 +622,111 @@ function App() {
               <StatCard label="Overall Progress" value={`${overallProgress}%`} color="blue" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Panel title="Subject Progress">
-                {subjects.length === 0 ? (
-                  <EmptyState text="No subjects yet. Add a subject to begin tracking." />
-                ) : subjects.map((subject) => {
-                  const subjectProgress = ((subject.completedChapters || 0) / (subject.totalChapters || 1)) * 100;
-                  return (
-                    <div key={subject.id} className="mb-4">
-                      <div className="flex justify-between text-sm mb-2">
-                        <span className="font-semibold">{subject.name}</span>
-                        <span className="text-slate-400">{Math.round(subjectProgress)}%</span>
+            <div className="dashboard-grid">
+              <Panel title="Subject performance">
+                <div className="subject-progress-list">
+                  {subjects.length === 0 ? (
+                    <EmptyState text="No subjects yet. Add a subject to begin tracking." />
+                  ) : subjectProgress.map((subject) => (
+                    <div key={subject.name} className="progress-row">
+                      <div className="label-row">
+                        <span>{subject.name}</span>
+                        <span>{Math.round(subject.value)}%</span>
                       </div>
-                      <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-violet-500 to-purple-500" style={{ width: `${subjectProgress}%` }} />
-                      </div>
-                      <div className="mt-2 text-xs text-slate-400 flex justify-between">
-                        <span>{subject.completedChapters || 0}/{subject.totalChapters || 0} chapters</span>
-                        <span>{subject.timeSpent || 0} min</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </Panel>
-
-              <Panel title="Study Analytics">
-                <div className="space-y-4">
-                  <div className="flex justify-between"><span>Today</span><strong>{dailyMinutes} min</strong></div>
-                  <div className="flex justify-between"><span>Week</span><strong>{weeklyMinutes} min</strong></div>
-                  <div className="flex justify-between"><span>Streak</span><strong>{studyStats.streak || 0} days</strong></div>
-                  <div className="flex justify-between"><span>Sessions</span><strong>{studyStats.totalSessions || 0}</strong></div>
-                  <div className="flex justify-between"><span>Completed Chapters</span><strong>{completedChapters}</strong></div>
-                  <div className="flex justify-between"><span>Pending Chapters</span><strong>{Math.max(totalChapters - completedChapters, 0)}</strong></div>
-                </div>
-              </Panel>
-            </div>
-
-            <Panel title="My Subjects">
-              {subjects.length === 0 ? (
-                <EmptyState text="No study subjects created yet." />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {subjects.map((subject) => (
-                    <div key={subject.id} className="rounded-2xl border border-slate-700 bg-slate-800 p-4">
-                      <div className="flex justify-between items-center mb-3">
-                        <h4 className="font-bold">{subject.name}</h4>
-                        <button onClick={() => setActiveSection('My Subjects')} className="text-xs text-violet-400">Manage</button>
-                      </div>
-                      <div className="space-y-2 text-sm text-slate-300">
-                        <div className="flex justify-between"><span>Completed</span><span>{subject.completedChapters || 0}</span></div>
-                        <div className="flex justify-between"><span>Pending</span><span>{Math.max((subject.totalChapters || 0) - (subject.completedChapters || 0), 0)}</span></div>
-                        <div className="flex justify-between"><span>Time</span><span>{subject.timeSpent || 0} min</span></div>
-                        <div className="flex justify-between"><span>Last studied</span><span>{formatDate(subject.lastStudied)}</span></div>
+                      <div className="progress-track">
+                        <div className="progress-fill" style={{ width: `${subject.value}%` }} />
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
-            </Panel>
+              </Panel>
+
+              <Panel title="Weekly rhythm">
+                <div className="bar-chart">
+                  {chartBars.map((bar, index) => (
+                    <div key={`${bar.label}-${index}`} className="bar-group">
+                      <div className="bar-value">{bar.value}m</div>
+                      <div className="bar-track">
+                        <div className="bar-fill" style={{ height: `${Math.max(8, (bar.value / Math.max(1, ...chartBars.map((item) => item.value))) * 100)}%` }} />
+                      </div>
+                      <div className="bar-label">{bar.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              <Panel title="Priority tasks">
+                <div className="task-list">
+                  {upcomingTasks.length === 0 ? (
+                    <EmptyState text="No upcoming tasks in your plan yet." />
+                  ) : upcomingTasks.map((task, index) => (
+                    <div key={`${task.subject}-${task.chapter}-${index}`} className="task-item">
+                      <div className="task-dot" />
+                      <div className="task-copy">
+                        <div className="task-title">{task.subject}</div>
+                        <div className="task-meta">{task.chapter} • {task.duration} min</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              <Panel title="Study pulse">
+                <div className="pulse-metrics">
+                  <div className="pulse-box">
+                    <span>Today</span>
+                    <strong>{dailyMinutes} min</strong>
+                  </div>
+                  <div className="pulse-box">
+                    <span>Week</span>
+                    <strong>{weeklyMinutes} min</strong>
+                  </div>
+                  <div className="pulse-box">
+                    <span>Sessions</span>
+                    <strong>{studyStats.totalSessions || 0}</strong>
+                  </div>
+                  <div className="pulse-box">
+                    <span>Completed</span>
+                    <strong>{completedChapters}</strong>
+                  </div>
+                </div>
+              </Panel>
+            </div>
           </div>
         );
+      }
 
       case 'Study Planner':
         return (
           <div className="space-y-6">
-            <Panel title="AI Study Planner">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button onClick={addPlannerFromForm} className="rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3 font-semibold transition">Generate planner</button>
-                <button onClick={() => setStudyPlan([])} className="rounded-xl bg-slate-700 hover:bg-slate-600 px-4 py-3 font-semibold transition">Clear plan</button>
+            <div className="planner-hero panel">
+              <div>
+                <div className="eyebrow">Planning framework</div>
+                <h2 className="dashboard-title">Build a focused, realistic revision calendar.</h2>
               </div>
-            </Panel>
+              <div className="hero-actions">
+                <button onClick={addPlannerFromForm} className="primary-action">Generate planner</button>
+                <button onClick={() => setStudyPlan([])} className="secondary-action">Clear plan</button>
+              </div>
+            </div>
 
             {studyPlan.length === 0 ? (
               <EmptyState text="No study plan generated yet. Add subject details to build a day-by-day plan." />
             ) : (
-              <div className="space-y-4">
+              <div className="planner-grid">
                 {studyPlan.map((plan) => (
                   <Panel key={plan.date} title={`Day ${plan.dayNumber} • ${new Date(plan.date).toLocaleDateString()}`}>
-                    <div className="space-y-3">
+                    <div className="timeline-list">
                       {plan.tasks.map((task, idx) => (
-                        <div key={idx} className="rounded-xl border border-slate-700 bg-slate-800 p-3 flex justify-between items-center gap-3">
-                          <div>
-                            <div className="font-semibold">{task.subject}</div>
-                            <div className="text-sm text-slate-400">{task.chapter}</div>
+                        <div key={`${plan.date}-${task.subject}-${idx}`} className="timeline-item">
+                          <div className="timeline-bullet" />
+                          <div className="timeline-copy">
+                            <div className="task-title">{task.subject}</div>
+                            <div className="task-meta">{task.chapter}</div>
                           </div>
-                          <div className="text-right text-sm">
-                            <div>{task.duration} min</div>
-                            <div className="text-violet-400">{task.priority}</div>
+                          <div className="timeline-meta">
+                            <span>{task.duration} min</span>
+                            <em>{task.priority}</em>
                           </div>
                         </div>
                       ))}
@@ -686,7 +741,7 @@ function App() {
       case 'My Subjects':
         return (
           <div className="space-y-5">
-            <button onClick={addSubject} className="rounded-xl bg-violet-600 hover:bg-violet-500 px-4 py-3 font-semibold transition">+ Add Subject</button>
+            <button onClick={addSubject} className="primary-action">+ Add Subject</button>
 
             {subjects.length === 0 ? (
               <EmptyState text="No subjects added yet." />
@@ -694,12 +749,12 @@ function App() {
               <Panel key={subject.id} title={subject.name}>
                 <div className="space-y-3">
                   {subject.chapters.map((chapter) => (
-                    <div key={chapter.id} className="rounded-xl border border-slate-700 bg-slate-800 p-3 flex items-center justify-between gap-3">
+                    <div key={chapter.id} className="subject-row">
                       <span>{chapter.title}</span>
                       <select
                         value={chapter.status}
                         onChange={(e) => updateSubjectChapterStatus(subject.id, chapter.id, e.target.value)}
-                        className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-2 text-sm text-white"
+                        className="mini-select"
                       >
                         <option>Not Started</option>
                         <option>In Progress</option>
@@ -719,13 +774,13 @@ function App() {
             <Panel title="Study Timer">
               <div className="space-y-4">
                 <div className="text-center">
-                  <div className="text-5xl font-black text-violet-400">{String(Math.floor((timerMinutes * 60 + secondsLeft) / 60)).padStart(2,'0')}:{String((timerMinutes * 60 + secondsLeft) % 60).padStart(2,'0')}</div>
+                  <div className="timer-display-large">{String(Math.floor((timerMinutes * 60 + secondsLeft) / 60)).padStart(2,'0')}:{String((timerMinutes * 60 + secondsLeft) % 60).padStart(2,'0')}</div>
                   <div className="text-sm text-slate-400">Current session time</div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                   {PRESETS.map((duration) => (
-                    <button key={duration} onClick={() => { setTimerMinutes(duration); setSecondsLeft(0); setIsTimerRunning(false); }} className="rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-sm font-semibold">{duration} min</button>
+                    <button key={duration} onClick={() => { setTimerMinutes(duration); setSecondsLeft(0); setIsTimerRunning(false); }} className="preset-btn">{duration} min</button>
                   ))}
                 </div>
 
@@ -987,6 +1042,8 @@ function App() {
 
   return (
     <div className="app-shell min-h-screen">
+      <div className="background-blur blur-one" />
+      <div className="background-blur blur-two" />
       <aside className="sidebar">
         <div className="brand-row">
           <div className="brand-mark">S</div>
@@ -1001,7 +1058,8 @@ function App() {
             <button
               key={item}
               onClick={() => setActiveSection(item)}
-              className={`nav-item ${activeSection === item ? 'active' : ''}`}>
+              className={`nav-item ${activeSection === item ? 'active' : ''}`}
+            >
               {item}
             </button>
           ))}
@@ -1062,9 +1120,9 @@ function App() {
   );
 }
 
-function Panel({ title, children }) {
+function Panel({ title, children, className = '' }) {
   return (
-    <section className="panel">
+    <section className={`panel ${className}`.trim()}>
       <div className="panel-title">{title}</div>
       {children}
     </section>
@@ -1080,6 +1138,15 @@ function StatCard({ label, value, color }) {
     <div className={`stat-card ${color}`}>
       <div className="stat-label">{label}</div>
       <div className="stat-value">{value}</div>
+    </div>
+  );
+}
+
+function MetricPill({ label, value, accent }) {
+  return (
+    <div className={`metric-pill ${accent}`}>
+      <span>{label}</span>
+      <strong>{value}</strong>
     </div>
   );
 }
